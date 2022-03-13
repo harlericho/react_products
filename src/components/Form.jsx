@@ -1,5 +1,10 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
-const URLIMAGE = "http://127.0.0.1:8000/storage/uploads/";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faPlus, faUndo } from "@fortawesome/free-solid-svg-icons";
+const URL_API = "http://127.0.0.1:8000/";
+const URL_IMAGE = "http://127.0.0.1:8000/storage/uploads/";
 const initalForm = {
   id: null,
   code: "",
@@ -8,11 +13,10 @@ const initalForm = {
   price: "",
   image: "",
 };
-const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
+const Form = ({ getAllProducts, setDataEdit, dataEdit }) => {
   const [form, setForm] = useState(initalForm);
   const refCode = useRef();
   const refNames = useRef();
-  const refDescription = useRef();
   const refPrice = useRef();
   const refImage = useRef();
 
@@ -34,24 +38,94 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
   };
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (form.code === "") {
-      refCode.current.focus();
-      return;
-    }
-    if (form.names === "") {
-      refNames.current.focus();
-      return;
-    }
-    if (form.price === "") {
-      refPrice.current.focus();
-      return;
-    }
     if (form.id === null) {
       addProduct(form);
     } else {
       updateProduct(form);
     }
-    handleReset();
+  };
+  const addProduct = (product) => {
+    var params = new FormData();
+    params.append("code", product.code);
+    params.append("names", product.names);
+    params.append("description", product.description);
+    params.append("price", product.price);
+    params.append("image", product.image);
+    axios
+      .post(URL_API + "api/products/", params)
+      .then((res) => {
+        toast.success(res.data.product, { theme: "colored" });
+        getAllProducts();
+        handleReset();
+      })
+      .catch((err) => {
+        if (err.response.status === 422) {
+          if (err.response.data.error.code) {
+            refCode.current.focus();
+            toast.error(err.response.data.error.code[0], {
+              theme: "colored",
+            });
+            return;
+          }
+          if (err.response.data.error.names) {
+            refNames.current.focus();
+            toast.error(err.response.data.error.names[0], {
+              theme: "colored",
+            });
+            return;
+          }
+          if (err.response.data.error.price) {
+            refPrice.current.focus();
+            toast.error(err.response.data.error.price[0], {
+              theme: "colored",
+            });
+            return;
+          }
+        }
+      });
+  };
+  const updateProduct = (product) => {
+    var params = new FormData();
+    params.append("code", product.code);
+    params.append("names", product.names);
+    params.append("description", product.description);
+    params.append("price", product.price);
+    params.append("_method", "PUT");
+    if (product.image !== null) {
+      params.append("image", product.image);
+    }
+    axios
+      .post(URL_API + "api/products/" + product.id, params)
+      .then((res) => {
+        toast.success(res.data.product, { theme: "colored" });
+        getAllProducts();
+        handleReset();
+      })
+      .catch((err) => {
+        if (err.response.status === 422) {
+          if (err.response.data.error.code) {
+            refCode.current.focus();
+            toast.error(err.response.data.error.code[0], {
+              theme: "colored",
+            });
+            return;
+          }
+          if (err.response.data.error.names) {
+            refNames.current.focus();
+            toast.error(err.response.data.error.names[0], {
+              theme: "colored",
+            });
+            return;
+          }
+          if (err.response.data.error.price) {
+            refPrice.current.focus();
+            toast.error(err.response.data.error.price[0], {
+              theme: "colored",
+            });
+            return;
+          }
+        }
+      });
   };
   const handleReset = () => {
     setForm(initalForm);
@@ -66,10 +140,18 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
   useEffect(() => {
     refCode.current.focus();
     if (dataEdit !== null) {
-      setForm(dataEdit);
+      toast.warning("This mode edit product", { theme: "colored" });
+      setForm({
+        id: dataEdit.id,
+        code: dataEdit.code,
+        names: dataEdit.names,
+        description: dataEdit.description ?? "",
+        price: dataEdit.price,
+        image: dataEdit.image,
+      });
       if (dataEdit.image !== null) {
         setImage({
-          preview: URLIMAGE + dataEdit.image,
+          preview: URL_IMAGE + dataEdit.image,
           file: dataEdit.image,
         });
       } else {
@@ -100,7 +182,6 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
             minLength="6"
             maxLength="6"
             value={form.code}
-            required
             ref={refCode}
             onChange={handleChange}
           />
@@ -114,7 +195,6 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
             className="form-control"
             name="names"
             value={form.names}
-            required
             ref={refNames}
             onChange={handleChange}
           />
@@ -128,7 +208,6 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
             className="form-control"
             name="description"
             value={form.description}
-            ref={refDescription}
             onChange={handleChange}
           />
         </div>
@@ -141,7 +220,6 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
             className="form-control"
             name="price"
             value={form.price}
-            required
             ref={refPrice}
             onChange={handleChange}
           />
@@ -167,15 +245,20 @@ const Form = ({ addProduct, updateProduct, setDataEdit, dataEdit }) => {
         <button
           type="submit"
           className={dataEdit === null ? "btn btn-primary" : "btn btn-success"}
+          title={dataEdit === null ? "Create" : "Update"}
         >
-          {dataEdit === null ? "Create" : "Update"}
+          {dataEdit === null ? (
+            <FontAwesomeIcon icon={faPlus} />
+          ) : (
+            <FontAwesomeIcon icon={faEdit} />
+          )}
         </button>
         <button
           type="button"
           className="btn btn-info text-white"
           onClick={handleReset}
         >
-          New
+          <FontAwesomeIcon icon={faUndo} />
         </button>
       </form>
     </Fragment>

@@ -1,14 +1,20 @@
 import React, { Fragment } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faTrash } from "@fortawesome/free-solid-svg-icons";
 import imagen from "../sinimagen.png";
-const URLIMAGE = "http://127.0.0.1:8000/storage/uploads/";
-const Item = ({ product, url, setDataEdit, deleteProduct }) => {
+const URL_IMAGE = "http://127.0.0.1:8000/storage/uploads/";
+const Item = ({ product, setDataEdit, deleteProduct }) => {
   return (
     <Fragment>
       <tr>
         <td>{product.code}</td>
         <td>
           {product.image ? (
-            <img src={URLIMAGE + product.image} alt={product.name} width={40} />
+            <img
+              src={URL_IMAGE + product.image}
+              alt={product.name}
+              width={40}
+            />
           ) : (
             <img src={imagen} alt={product.name} width={40} />
           )}
@@ -24,7 +30,7 @@ const Item = ({ product, url, setDataEdit, deleteProduct }) => {
               setDataEdit(product);
             }}
           >
-            Edit
+            <FontAwesomeIcon icon={faEdit} />
           </button>
           <button
             className="btn btn-danger btn-sm"
@@ -33,7 +39,7 @@ const Item = ({ product, url, setDataEdit, deleteProduct }) => {
               deleteProduct(product.id);
             }}
           >
-            Delete
+            <FontAwesomeIcon icon={faTrash} />
           </button>
         </td>
       </tr>
